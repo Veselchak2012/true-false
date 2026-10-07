@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f7ee0">
+<title>Правдива та неправдива інформація</title>
+<style>
+:root{
+  --ink:#17325c;
+  --paper:#eaf4ff;
+  --grid:#cfe3f7;
+  --card:#ffffff;
+  --blue:#2f7ee0;
+  --green:#1fa463;
+  --green-bg:#d9f5e5;
+  --red:#e5484d;
+  --red-bg:#ffe1e1;
+  --sun:#ffc533;
+  --sun-bg:#fff0bf;
+  --violet:#7b5bd6;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  min-height:100vh;
+  min-height:100dvh;
+  color:var(--ink);
+  font-family:"Nunito","Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  font-size:18px;
+  line-height:1.35;
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:4px solid var(--violet);outline-offset:3px}
+
+#app{
+  max-width:640px;
+  margin:0 auto;
+  padding:calc(14px + var(--safe-t)) 14px 24px;
+}
+
+/* ---------- sticker cards ---------- */
+.card{
+  background:var(--card);
+  border:3px solid var(--ink);
+  border-radius:20px;
+  box-shadow:0 5px 0 var(--ink);
+  padding:16px;
+  margin-bottom:18px;
+}
+
+/* ---------- top bar ---------- */
+.top{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin:2px 2px 8px}
+.top .stars{background:var(--sun);border:3px solid var(--ink);border-radius:999px;padding:2px 12px;box-shadow:0 3px 0 var(--ink)}
+.bar{height:16px;border:3px solid var(--ink);border-radius:999px;background:#fff;overflow:hidden;margin-bottom:16px}
+.bar i{display:block;height:100%;background:var(--green);width:0;transition:width .4s ease}
+
+/* ---------- question ---------- */
+.chip{
+  display:inline-block;background:var(--blue);color:#fff;font-weight:800;
+  font-size:.85rem;padding:3px 12px;border-radius:999px;border:3px solid var(--ink);margin-bottom:10px
+}
+.q{display:flex;gap:12px;align-items:flex-start}
+.q .big{font-size:2.6rem;line-height:1}
+.q h2{margin:0;font-size:1.35rem;line-height:1.25;font-weight:900}
+.tip{margin:10px 0 0;font-weight:700;font-size:.95rem;opacity:.75}
+
+/* ---------- options ---------- */
+.opts{display:grid;gap:12px}
+.opt{
+  display:flex;align-items:center;gap:12px;width:100%;min-height:62px;
+  padding:10px 14px;text-align:left;font-weight:800;font-size:1.1rem;
+  background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:0 4px 0 var(--ink);
+  transition:transform .08s ease,box-shadow .08s ease,background .15s ease;
+}
+.opt:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.opt .mark{
+  flex:none;width:28px;height:28px;border:3px solid var(--ink);background:#fff;
+  display:grid;place-items:center;font-size:1rem;line-height:1;color:transparent
+}
+.opts.single .mark{border-radius:50%}
+.opts.multi .mark{border-radius:8px}
+.opt.sel{background:var(--sun-bg)}
+.opt.sel .mark{background:var(--sun);color:var(--ink)}
+.opt.good{background:var(--green-bg);border-color:var(--green);box-shadow:0 4px 0 var(--green)}
+.opt.good .mark{background:var(--green);border-color:var(--green);color:#fff}
+.opt.bad{background:var(--red-bg);border-color:var(--red);box-shadow:0 4px 0 var(--red)}
+.opt.bad .mark{background:var(--red);border-color:var(--red);color:#fff}
+.opt:disabled{cursor:default}
+.opt:disabled:not(.good):not(.bad){opacity:.6}
+
+/* ---------- sorting ---------- */
+.count{text-align:center;font-weight:800;margin:0 0 10px;opacity:.8}
+.item{
+  text-align:center;padding:18px 12px;margin-bottom:16px;
+  background:var(--sun-bg);border:3px dashed var(--ink);border-radius:20px;
+  animation:pop .3s ease;
+}
+.item .e{font-size:4rem;line-height:1.1}
+.item .t{font-size:1.4rem;font-weight:900;margin-top:6px;overflow-wrap:anywhere}
+.item.done{background:var(--green-bg);border-style:solid}
+.buckets{display:grid;gap:12px}
+.buckets.c2{grid-template-columns:1fr 1fr}
+.buckets.c3{grid-template-columns:1fr 1fr 1fr}
+.buckets.c1{grid-template-columns:1fr}
+.bucket{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  min-height:92px;padding:10px 6px;font-weight:900;text-align:center;font-size:1rem;
+  background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);
+  overflow-wrap:anywhere;
+}
+.buckets.c1 .bucket{flex-direction:row;min-height:64px;font-size:1.1rem;justify-content:flex-start;padding:10px 16px;gap:12px}
+.buckets.c1 .bucket{text-align:left}
+.bucket .be{font-size:2rem;line-height:1}
+.bucket:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.bucket:disabled{opacity:.5;cursor:default}
+
+/* ---------- footer with owl ---------- */
+#foot{
+  position:fixed;left:0;right:0;bottom:0;z-index:5;
+  padding:10px 14px calc(12px + var(--safe-b));
+  background:#fff;border-top:3px solid var(--ink);
+}
+#foot .in{max-width:640px;margin:0 auto}
+#foot .row{display:flex;gap:10px;align-items:center}
+#foot .owl{flex:none;font-size:2.6rem;line-height:1}
+#say{
+  flex:1;margin:0;padding:8px 12px;font-weight:800;font-size:1rem;line-height:1.3;
+  background:var(--paper);border:3px solid var(--ink);border-radius:16px;min-height:52px;
+  display:flex;align-items:center;
+}
+#foot.good #say{background:var(--green-bg);border-color:var(--green)}
+#foot.bad #say{background:var(--red-bg);border-color:var(--red)}
+#act{
+  display:block;width:100%;margin-top:10px;min-height:56px;font-weight:900;font-size:1.2rem;
+  background:var(--green);color:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink);
+}
+#act:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+#act:disabled{background:#b9c6d8;color:#5b6b83;cursor:default}
+#act[hidden]{display:none}
+
+/* ---------- start / end ---------- */
+.hero{text-align:center}
+.hero .owl-big{font-size:5.5rem;line-height:1}
+.hero h1{font-size:1.9rem;line-height:1.15;margin:8px 0 10px;font-weight:900}
+.hero p{margin:0 0 12px;font-weight:700}
+.btn{
+  display:inline-block;min-height:60px;padding:10px 28px;font-weight:900;font-size:1.3rem;
+  background:var(--green);color:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);
+}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.btn.alt{background:var(--sun);color:var(--ink)}
+.rules{list-style:none;padding:0;margin:14px 0 18px;text-align:left;display:grid;gap:8px;font-weight:700}
+.rules li{display:flex;gap:10px;align-items:center;background:var(--paper);border:3px solid var(--ink);border-radius:14px;padding:8px 12px}
+.rules .e{font-size:1.6rem}
+.score{font-size:3rem;font-weight:900;margin:6px 0}
+.remember{background:var(--sun-bg);border:3px solid var(--ink);border-radius:16px;padding:12px;font-weight:800;margin:14px 0 18px}
+
+/* ---------- motion ---------- */
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes pop{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fall{from{transform:translateY(-10vh) rotate(0)}to{transform:translateY(110vh) rotate(540deg)}}
+.shake{animation:shake .4s ease}
+.confetti{position:fixed;top:0;z-index:20;font-size:1.8rem;pointer-events:none;animation:fall linear forwards}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .confetti{display:none}
+}
+
+@media (max-width:380px){
+  body{font-size:16px}
+  .q h2{font-size:1.2rem}
+  .q .big{font-size:2.2rem}
+  .opt{font-size:1rem}
+  .bucket{font-size:.9rem}
+  .item .e{font-size:3.2rem}
+  .hero h1{font-size:1.6rem}
+  #foot{padding-top:8px}
+  #foot .owl{font-size:2rem}
+  #say{font-size:.9rem;padding:6px 10px;min-height:44px}
+  #act{margin-top:8px;min-height:50px;font-size:1.1rem}
+}
+@media (min-width:700px){
+  body{font-size:20px}
+}
+</style>
+</head>
+<body>
+<main id="app" aria-live="off"></main>
+
+<footer id="foot" hidden>
+  <div class="in">
+    <div class="row">
+      <span class="owl" aria-hidden="true">🦉</span>
+      <p id="say" role="status" aria-live="polite"></p>
+    </div>
+    <button id="act" type="button" hidden></button>
+  </div>
+</footer>
+
+<noscript>Для цієї вправи потрібен увімкнений JavaScript.</noscript>
+
+<script>
+(function(){
+'use strict';
+
+/* =====================================================================
+   ДАНІ ЗАВДАНЬ — тут можна змінювати, додавати або видаляти завдання.
+   type: "single"  — одна правильна відповідь (answer: номер у options, з 0)
+         "multi"   — кілька правильних відповідей (answer: масив номерів)
+         "sort"    — розсортувати картки по кошиках (item.b — номер кошика)
+   ===================================================================== */
+var TASKS = [
+  {
+    section:"Логічна розминка", type:"single", emoji:"🐔",
+    q:"Скільки ніг у двох курей?",
+    options:["2","4","6","8"], answer:1,
+    explain:"У кожної курки по дві ноги: 2 + 2 = 4."
+  },
+  {
+    section:"Види повідомлень", type:"sort", emoji:"💬",
+    q:"Яке це повідомлення: звукове, графічне чи текстове?",
+    buckets:[{e:"🔊",l:"Звукове"},{e:"🖼️",l:"Графічне"},{e:"📝",l:"Текстове"}],
+    items:[
+      {e:"🐶",t:"Гавкіт собаки",b:0},{e:"🥁",t:"Гра на барабані",b:0},
+      {e:"🚦",t:"Світлофор",b:1},{e:"🖼️",t:"Картина",b:1},
+      {e:"📰",t:"Стаття в газеті",b:2},{e:"💌",t:"Записка від мами",b:2}
+    ],
+    explain:"Звук ми чуємо, малюнок бачимо, а текст читаємо."
+  },
+  {
+    section:"Види повідомлень", type:"single", emoji:"👂",
+    q:"Мама кличе тебе на обід. Яку інформацію ти отримуєш?",
+    options:["Звукову","Графічну","Текстову"], answer:0,
+    explain:"Мамин голос ми чуємо вухами, тож це звукова інформація."
+  },
+  {
+    section:"Джерела інформації", type:"multi", emoji:"🐹",
+    q:"Що може бути джерелом інформації про те, як доглядати за хом’ячком?",
+    options:["Книжка про тварин","Лікар-ветеринар","Дорослі, які мають хом’ячка","Порожня коробка","Старий м’яч"], answer:[0,1,2],
+    explain:"Про тварин розкажуть книжки, ветеринар і досвідчені дорослі. Коробка й м’яч нічого не знають!"
+  },
+  {
+    section:"Правдива та неправдива інформація", type:"single", emoji:"🤥",
+    q:"Яка з цих інформацій неправдива?",
+    options:["Вода мокра","Сніг білий","Влітку холодніше, ніж узимку","Собаки вміють гавкати"], answer:2,
+    explain:"Влітку тепліше, ніж узимку, тому це твердження не відповідає дійсності."
+  },
+  {
+    section:"Правдива чи неправдива?", type:"sort", emoji:"🤔",
+    q:"Правдива це інформація чи неправдива?",
+    buckets:[{e:"✅",l:"Правдива"},{e:"❌",l:"Неправдива"}],
+    items:[
+      {e:"❄️",t:"Взимку буває сніг",b:0},
+      {e:"🐱",t:"У кішки чотири лапи",b:0},
+      {e:"📅",t:"Після понеділка йде вівторок",b:0},
+      {e:"🐄",t:"Корова несе яйця",b:1},
+      {e:"🌞",t:"Уночі світить Сонце",b:1},
+      {e:"🔥",t:"Вогонь холодний",b:1}
+    ],
+    explain:"Правдива інформація відповідає дійсності, а неправдива — ні."
+  },
+  {
+    section:"Як перевірити інформацію?", type:"single", emoji:"🦓",
+    q:"Друг сказав, що зебра у клітинку. Що ти зробиш?",
+    options:[
+      "Подивлюся в книжці про тварин або запитаю дорослих",
+      "Повірю й розкажу всім",
+      "Не буду нічого перевіряти"
+    ], answer:0,
+    explain:"Зебра в смужку! Це можна перевірити в книжці або в дорослих."
+  },
+  {
+    section:"Як перевірити інформацію?", type:"multi", emoji:"🧊",
+    q:"Ти почув(ла), що лід на річці вже міцний. Як це безпечно перевірити?",
+    options:[
+      "Запитати в дорослих",
+      "Прочитати повідомлення рятувальників",
+      "Піти на лід і пострибати",
+      "Повірити першому, хто це сказав"
+    ], answer:[0,1],
+    explain:"Небезпечну інформацію ніколи не перевіряють самотужки. Питаємо дорослих і читаємо офіційні повідомлення."
+  },
+  {
+    section:"Що таке фейк?", type:"single", emoji:"🚩",
+    q:"Що таке фейк?",
+    options:[
+      "Повідомлення, у якому немає правди",
+      "Смішний малюнок",
+      "Нова комп’ютерна гра",
+      "Лист від мами"
+    ], answer:0,
+    explain:"Фейк — це повідомлення, у якому частково або повністю немає правди."
+  },
+  {
+    section:"Що таке фейк?", type:"sort", emoji:"📱",
+    q:"Це правда чи фейк?",
+    buckets:[{e:"✅",l:"Правда"},{e:"🚩",l:"Фейк"}],
+    items:[
+      {e:"📘",t:"У підручнику написано: у тижні сім днів",b:0},
+      {e:"🌦️",t:"Синоптики повідомили: завтра буде дощ",b:0},
+      {e:"📨",t:"«Усім переслати! Завтра на уроці роздаватимуть по сто цукерок!» — без підпису",b:1},
+      {e:"🌕",t:"«Сьогодні Місяць упаде на Землю!»",b:1},
+      {e:"🪄",t:"«Чарівна кнопка сама робить уроки!»",b:1}
+    ],
+    explain:"Перш ніж повірити повідомленню чи переслати його, потрібно його перевірити."
+  },
+  {
+    section:"Як розпізнати фейк?", type:"multi", emoji:"🕵️",
+    q:"Які ознаки показують, що повідомлення може бути фейком?",
+    options:[
+      "Невідомо, хто його написав",
+      "Просять негайно переслати всім",
+      "Обіцяють неможливі чудеса",
+      "Є підпис автора й дата",
+      "Так написано в підручнику"
+    ], answer:[0,1,2],
+    explain:"Підозріло, коли немає автора, поспішають переслати або обіцяють чудеса."
+  },
+  {
+    section:"Синоніми до слова «фейк»", type:"multi", emoji:"🎭",
+    q:"Обери слова, які за змістом схожі на слово «фейк».",
+    options:["Брехня","Вигадка","Фальшивка","Правда","Факт","Істина"], answer:[0,1,2],
+    explain:"Брехня, вигадка й фальшивка — це майже фейк. А правда, факт та істина — його протилежність."
+  },
+  {
+    section:"Реальне чи вигадане?", type:"sort", emoji:"🦄",
+    q:"Що існує насправді, а що тільки вигадане?",
+    buckets:[{e:"🌍",l:"Є насправді"},{e:"✨",l:"Вигадка"}],
+    items:[
+      {e:"🐕",t:"Собака",b:0},{e:"🦊",t:"Лисиця",b:0},{e:"🐘",t:"Слон",b:0},
+      {e:"🐉",t:"Дракон",b:1},{e:"🧚",t:"Фея",b:1},{e:"🦄",t:"Єдиноріг",b:1}
+    ],
+    explain:"У казках бувають дракони й феї, але в житті їх немає."
+  },
+  {
+    section:"Шкода від неправди", type:"single", emoji:"⚠️",
+    q:"Чому не можна пересилати друзям неправдиві повідомлення?",
+    options:[
+      "Інші можуть повірити й потрапити в халепу",
+      "Бо це довго набирати",
+      "Нічого страшного не станеться"
+    ], answer:0,
+    explain:"Неправдива інформація може зашкодити, тому її не поширюємо."
+  },
+  {
+    section:"Що робити?", type:"single", emoji:"📲",
+    q:"Ти побачив(ла) дивну новину в інтернеті. Що зробити першим?",
+    options:[
+      "Показати дорослим і разом перевірити",
+      "Одразу переслати всім друзям",
+      "Написати в коментарях, що це правда"
+    ], answer:0,
+    explain:"Спочатку перевіряємо разом із дорослими, а потім вирішуємо, чи можна вірити."
+  }
+];
+
+/* ====================== ДОПОМІЖНІ ФУНКЦІЇ ====================== */
+var PRAISE = ["Молодець!","Чудово!","Так тримати!","Правильно!","Відмінно!"];
+
+function shuffle(a){
+  var r=a.slice(), i, j, t;
+  for(i=r.length-1;i>0;i--){
+    j=Math.floor(Math.random()*(i+1));
+    t=r[i]; r[i]=r[j]; r[j]=t;
+  }
+  return r;
+}
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+function el(tag, attrs){
+  var e=document.createElement(tag), k, kids=Array.prototype.slice.call(arguments,2);
+  attrs=attrs||{};
+  for(k in attrs){
+    if(!Object.prototype.hasOwnProperty.call(attrs,k)) continue;
+    var v=attrs[k];
+    if(v===false||v==null) continue;
+    if(k==="class") e.className=v;
+    else if(k.slice(0,2)==="on") e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v===true?"":v);
+  }
+  (function add(list){
+    list.forEach(function(c){
+      if(c==null||c===false) return;
+      if(Array.isArray(c)) return add(c);
+      e.appendChild(c.nodeType ? c : document.createTextNode(String(c)));
+    });
+  })(kids);
+  return e;
+}
+
+var $app=document.getElementById("app");
+var $foot=document.getElementById("foot");
+var $say=document.getElementById("say");
+var $act=document.getElementById("act");
+
+var S={ i:0, stars:0, mistakes:0, solved:false, sel:null, opts:null,
+        queue:null, qi:0, ui:{} };
+
+function syncPad(){
+  var h = $foot.hidden ? 0 : $foot.offsetHeight;
+  $app.style.paddingBottom = (h ? h+18 : 24) + "px";
+}
+function say(msg, mood){
+  $say.textContent=msg;
+  $foot.className = mood||"";
+  syncPad();
+}
+function setAct(mode, label, disabled){
+  if(mode==="none"){ $act.hidden=true; $act.dataset.mode="none"; syncPad(); return; }
+  $act.hidden=false;
+  $act.dataset.mode=mode;
+  $act.textContent=label;
+  $act.disabled=!!disabled;
+  syncPad();
+}
+function shakeEl(node){
+  node.classList.remove("shake");
+  void node.offsetWidth;
+  node.classList.add("shake");
+}
+function clearScreen(){
+  while($app.firstChild) $app.removeChild($app.firstChild);
+  window.scrollTo(0,0);
+}
+
+/* ============================ ЕКРАНИ ============================ */
+function showStart(){
+  S.i=0; S.stars=0;
+  clearScreen();
+  $foot.hidden=true;
+  syncPad();
+  $app.appendChild(
+    el("section",{class:"card hero"},
+      el("div",{class:"owl-big","aria-hidden":"true"},"🦉"),
+      el("h1",null,"Правда чи фейк?"),
+      el("p",null,"Допоможи сові Знайці розібратися, де правдива інформація, а де неправдива."),
+      el("ul",{class:"rules"},
+        el("li",null,el("span",{class:"e","aria-hidden":"true"},"👆"),"Читай завдання й торкайся відповіді"),
+        el("li",null,el("span",{class:"e","aria-hidden":"true"},"⭐"),"Правильно з першого разу — отримуєш зірочку"),
+        el("li",null,el("span",{class:"e","aria-hidden":"true"},"🔁"),"Помилився? Нічого, спробуй ще раз!")
+      ),
+      el("button",{class:"btn",type:"button",onclick:function(){ S.i=0; S.stars=0; showTask(); }},"Почнімо!")
+    )
+  );
+}
+
+function topBar(){
+  var count=el("span",null,"Завдання "+(S.i+1)+" з "+TASKS.length);
+  var stars=el("span",{class:"stars","aria-label":"Зірочок: "+S.stars},"⭐ "+S.stars);
+  var fill=el("i");
+  fill.style.width=(S.i/TASKS.length*100)+"%";
+  S.ui.stars=stars; S.ui.fill=fill; S.ui.count=count;
+  return el("div",null,
+    el("div",{class:"top"},count,stars),
+    el("div",{class:"bar",role:"progressbar","aria-valuemin":"0","aria-valuemax":String(TASKS.length),"aria-valuenow":String(S.i)},fill)
+  );
+}
+
+function showTask(){
+  var t=TASKS[S.i];
+  S.mistakes=0; S.solved=false; S.sel={}; S.opts=null; S.queue=null; S.qi=0;
+  clearScreen();
+  $foot.hidden=false;
+  setAct("none");
+
+  var tip = t.type==="single" ? "Обери одну відповідь."
+          : t.type==="multi" ? "Обери всі правильні відповіді, а потім натисни «Перевірити»."
+          : "Торкнися потрібного кошика.";
+
+  $app.appendChild(topBar());
+  $app.appendChild(
+    el("section",{class:"card"},
+      el("span",{class:"chip"},t.section),
+      el("div",{class:"q"},
+        el("div",{class:"big","aria-hidden":"true"},t.emoji),
+        el("h2",null,t.q)
+      ),
+      el("p",{class:"tip"},tip)
+    )
+  );
+
+  if(t.type==="single") renderSingle(t);
+  else if(t.type==="multi") renderMulti(t);
+  else renderSort(t);
+}
+
+function updateProgress(){
+  var done=S.i+(S.solved?1:0);
+  S.ui.fill.style.width=(done/TASKS.length*100)+"%";
+  S.ui.stars.textContent="⭐ "+S.stars;
+  S.ui.stars.setAttribute("aria-label","Зірочок: "+S.stars);
+}
+
+function finishTask(t){
+  S.solved=true;
+  if(S.mistakes===0) S.stars++;
+  updateProgress();
+  var lead = S.mistakes===0 ? pick(PRAISE) : "Правильно! Ти впорався(лась).";
+  say(lead+" "+t.explain,"good");
+  setAct("next", S.i===TASKS.length-1 ? "Дивитись результат" : "Далі");
+}
+
+function goNext(){
+  if(S.i>=TASKS.length-1) showEnd();
+  else { S.i++; showTask(); }
+}
+
+/* ---------------------- одна відповідь ---------------------- */
+function renderSingle(t){
+  S.opts = shuffle(t.options.map(function(txt,i){ return {t:txt, ok:i===t.answer}; }));
+  var box=el("div",{class:"opts single"});
+  S.opts.forEach(function(o){
+    var btn=el("button",{class:"opt",type:"button"},
+      el("span",{class:"mark","aria-hidden":"true"},"✓"), el("span",null,o.t));
+    btn.addEventListener("click",function(){
+      if(S.solved||btn.disabled) return;
+      if(o.ok){
+        btn.classList.add("good");
+        Array.prototype.forEach.call(box.children,function(b){ b.disabled=true; });
+        finishTask(t);
+      } else {
+        S.mistakes++;
+        btn.classList.add("bad");
+        btn.disabled=true;
+        shakeEl(btn);
+        say("Ой, не зовсім так. Подумай і спробуй ще раз!","bad");
+      }
+    });
+    box.appendChild(btn);
+  });
+  $app.appendChild(box);
+  say("Читай уважно. Ти впораєшся!","");
+}
+
+/* ---------------------- кілька відповідей ---------------------- */
+function renderMulti(t){
+  S.opts = shuffle(t.options.map(function(txt,i){ return {t:txt, ok:t.answer.indexOf(i)!==-1}; }));
+  var box=el("div",{class:"opts multi"});
+  var btns=[];
+  S.opts.forEach(function(o,idx){
+    var btn=el("button",{class:"opt",type:"button","aria-pressed":"false"},
+      el("span",{class:"mark","aria-hidden":"true"},"✓"), el("span",null,o.t));
+    btn.addEventListener("click",function(){
+      if(S.solved) return;
+      if(S.sel[idx]){ delete S.sel[idx]; btn.classList.remove("sel"); btn.setAttribute("aria-pressed","false"); }
+      else { S.sel[idx]=true; btn.classList.add("sel"); btn.setAttribute("aria-pressed","true"); }
+      setAct("check","Перевірити",Object.keys(S.sel).length===0);
+    });
+    btns.push(btn);
+    box.appendChild(btn);
+  });
+  S.ui.btns=btns;
+  $app.appendChild(box);
+  say("Можна обрати кілька відповідей.","");
+  setAct("check","Перевірити",true);
+}
+
+function checkMulti(){
+  var t=TASKS[S.i];
+  if(S.solved) return;
+  var wrong=[], missing=0;
+  S.opts.forEach(function(o,idx){
+    var chosen=!!S.sel[idx];
+    if(chosen && !o.ok) wrong.push(idx);
+    if(!chosen && o.ok) missing++;
+  });
+  if(wrong.length===0 && missing===0){
+    S.opts.forEach(function(o,idx){
+      var b=S.ui.btns[idx];
+      b.classList.remove("sel");
+      if(o.ok) b.classList.add("good");
+      b.disabled=true;
+    });
+    finishTask(t);
+    return;
+  }
+  S.mistakes++;
+  if(wrong.length>0){
+    wrong.forEach(function(idx){
+      var b=S.ui.btns[idx];
+      delete S.sel[idx];
+      b.classList.remove("sel");
+      b.setAttribute("aria-pressed","false");
+      b.classList.add("bad");
+      b.disabled=true;
+      shakeEl(b);
+    });
+    say("Червоні відповіді зайві — я їх прибрала. Подумай ще!","bad");
+  } else {
+    say("Ти знайшов(ла) ще не все. Пошукай ще правильні відповіді!","bad");
+  }
+  setAct("check","Перевірити",Object.keys(S.sel).length===0);
+}
+
+/* ---------------------- сортування ---------------------- */
+function renderSort(t){
+  S.queue=shuffle(t.items);
+  S.qi=0;
+  var counter=el("p",{class:"count"});
+  var itemBox=el("div");
+  var maxLen=0;
+  t.buckets.forEach(function(b){ if(b.l.length>maxLen) maxLen=b.l.length; });
+  var cols = t.buckets.length===2 ? "c2" : (maxLen<=10 ? "c3" : "c1");
+  var bucketBox=el("div",{class:"buckets "+cols});
+  var bucketBtns=[];
+
+  t.buckets.forEach(function(b,bi){
+    var btn=el("button",{class:"bucket",type:"button"},
+      el("span",{class:"be","aria-hidden":"true"},b.e), el("span",null,b.l));
+    btn.addEventListener("click",function(){
+      if(S.solved||S.qi>=S.queue.length) return;
+      var cur=S.queue[S.qi];
+      if(cur.b===bi){
+        S.qi++;
+        say(pick(PRAISE)+" Йдемо далі.","good");
+        showItem();
+      } else {
+        S.mistakes++;
+        shakeEl(itemBox.firstChild);
+        shakeEl(btn);
+        say("Ця відповідь не підходить. Подумай ще!","bad");
+      }
+    });
+    bucketBtns.push(btn);
+    bucketBox.appendChild(btn);
+  });
+
+  function showItem(){
+    while(itemBox.firstChild) itemBox.removeChild(itemBox.firstChild);
+    if(S.qi>=S.queue.length){
+      counter.textContent="Усе розсортовано!";
+      itemBox.appendChild(el("div",{class:"item done"},
+        el("div",{class:"e","aria-hidden":"true"},"🎉"),
+        el("div",{class:"t"},"Усі картки на місці!")));
+      bucketBtns.forEach(function(b){ b.disabled=true; });
+      finishTask(t);
+      return;
+    }
+    var cur=S.queue[S.qi];
+    counter.textContent="Картка "+(S.qi+1)+" з "+S.queue.length;
+    itemBox.appendChild(el("div",{class:"item"},
+      el("div",{class:"e","aria-hidden":"true"},cur.e),
+      el("div",{class:"t"},cur.t)));
+  }
+
+  $app.appendChild(counter);
+  $app.appendChild(itemBox);
+  $app.appendChild(bucketBox);
+  showItem();
+  if(!S.solved) say("Подивись на картку й обери, куди вона підходить.","");
+}
+
+/* ---------------------- фінал ---------------------- */
+function showEnd(){
+  clearScreen();
+  $foot.hidden=true;
+  syncPad();
+  var total=TASKS.length, ratio=S.stars/total, title, text, icon;
+  if(ratio>=0.85){ icon="🏆"; title="Супердетектив правди!"; text="Ти чудово вмієш відрізняти правду від вигадки."; }
+  else if(ratio>=0.55){ icon="🥈"; title="Дуже добре!"; text="Ти вже майже все знаєш про правдиву та неправдиву інформацію."; }
+  else { icon="🌱"; title="Гарний початок!"; text="Спробуй пройти ще раз — і зірочок стане більше."; }
+
+  $app.appendChild(
+    el("section",{class:"card hero"},
+      el("div",{class:"owl-big","aria-hidden":"true"},icon),
+      el("h1",null,title),
+      el("div",{class:"score"},"⭐ "+S.stars+" з "+total),
+      el("p",null,text),
+      el("div",{class:"remember"},"Пам’ятай: неправдива інформація може зашкодити. Перевіряй її сам(а) і не поширюй неправдиві відомості!"),
+      el("button",{class:"btn alt",type:"button",onclick:showStart},"Пройти ще раз")
+    )
+  );
+  if(ratio>=0.55) confetti();
+}
+
+function confetti(){
+  if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var bits=["⭐","🎉","✨","🎈","🌟"], n=28, i, s;
+  for(i=0;i<n;i++){
+    s=el("span",{class:"confetti","aria-hidden":"true"},bits[i%bits.length]);
+    s.style.left=(Math.random()*96)+"vw";
+    s.style.animationDuration=(2.2+Math.random()*2)+"s";
+    s.style.animationDelay=(Math.random()*0.8)+"s";
+    s.addEventListener("animationend",function(ev){ if(ev.target.parentNode) ev.target.parentNode.removeChild(ev.target); });
+    document.body.appendChild(s);
+  }
+}
+
+/* ---------------------- кнопка внизу ---------------------- */
+$act.addEventListener("click",function(){
+  var mode=$act.dataset.mode;
+  if(mode==="check") checkMulti();
+  else if(mode==="next") goNext();
+});
+
+window.addEventListener("resize",syncPad);
+if(window.ResizeObserver){ new ResizeObserver(syncPad).observe($foot); }
+
+showStart();
+
+})();
+</script>
+</body>
+</html>
